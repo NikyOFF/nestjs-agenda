@@ -41,7 +41,7 @@ import { AgendaModule } from 'nestjs-agenda-module';
 
 @Module({
   imports: [
-    TelegrafModule.forRoot({
+    AgendaModule.forRoot({
         db: { address: 'MONGO_CONNECTION_URI' },
     }),
   ],
