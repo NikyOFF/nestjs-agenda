@@ -53,7 +53,7 @@ export class AppModule {}
 
 Before you can use a job, you must define its processing behavior.
 
-For do this you need create `jobs-processor`
+For do this you need create `job-processors`
 
 ```ts
 import { JobProcessors } from 'nestjs-agenda-module';
