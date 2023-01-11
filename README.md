@@ -115,7 +115,7 @@ import { ExampleJobProcessors } from './example.job-processors.ts';
 
 @Module({
   imports: [
-    TelegrafModule.forRoot({
+    AgendaModule.forRoot({
         db: { address: 'MONGO_CONNECTION_URI' },
     }),
   ],
