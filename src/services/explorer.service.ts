@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { AgendaParamsFactory } from '../factories/agenda-params.factory';
+import { AgendaParamsFactory } from '../factories';
 import Agenda from 'agenda';
-import { MetadataAccessorService } from '../services/metadata-accessor.service';
+import { MetadataAccessorService } from './metadata-accessor.service';
 import {
   ModuleRef,
   MetadataScanner,
@@ -12,7 +12,8 @@ import { ExternalContextCreator } from '@nestjs/core/helpers/external-context-cr
 import { AGENDA, PARAM_ARGS_METADATA } from '../constants';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 import { ParamMetadata } from '@nestjs/core/helpers/interfaces';
-import { AgendaContextType } from '../types/agenda-context.type';
+import { AgendaContextType } from '../types';
+import { ProcessorMetadataInterface } from '../interfaces';
 
 @Injectable()
 export class ExplorerService implements OnModuleInit {
@@ -74,20 +75,29 @@ export class ExplorerService implements OnModuleInit {
     }
 
     for (const processorMetadata of processorsMetadata) {
-      const processorFunction = this.createContextProcessor(
-        instance,
-        prototype,
-        methodKey,
-      );
-
-      this.agenda.define(
-        processorMetadata.name,
-        processorMetadata.options || {},
-        async (job, done) => {
-          await processorFunction(job, done);
-        },
-      );
+      this.defineProcessor(instance, prototype, methodKey, processorMetadata);
     }
+  }
+
+  private defineProcessor(
+    instance: any,
+    prototype: any,
+    methodKey: string,
+    metadata: ProcessorMetadataInterface,
+  ): void {
+    const processorFunction = this.createContextProcessor(
+      instance,
+      prototype,
+      methodKey,
+    );
+
+    this.agenda.define(
+      metadata.name,
+      metadata.options || {},
+      async (job, done) => {
+        await processorFunction(job, done);
+      },
+    );
   }
 
   private createContextProcessor<T extends Record<string, unknown>>(
@@ -114,18 +124,9 @@ export class ExplorerService implements OnModuleInit {
   private filterJobProcessors(
     wrapper: InstanceWrapper,
   ): InstanceWrapper<unknown> {
-    if (!wrapper.instance) {
-      return undefined;
-    }
-
-    const isJobProcessors = this.metadataAccessor.isJobProcessors(
-      wrapper.metatype,
-    );
-
-    if (!isJobProcessors) {
-      return undefined;
-    }
-
-    return wrapper;
+    return !wrapper.instance ||
+      !this.metadataAccessor.isJobProcessors(wrapper.metatype)
+      ? undefined
+      : wrapper;
   }
 }

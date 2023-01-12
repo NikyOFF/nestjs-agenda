@@ -1,5 +1,5 @@
-import { AgendaParamtypeEnum } from '../enums/agenda-paramtype.enum';
-import { ParamData } from '../types/param-data.type';
+import { AgendaParamtypeEnum } from '../enums';
+import { ParamData } from '../types';
 import { PARAM_ARGS_METADATA } from '../constants';
 import { assignMetadata } from '@nestjs/common';
 

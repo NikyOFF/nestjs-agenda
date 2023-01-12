@@ -1,6 +1,6 @@
 import { DefineOptions } from 'agenda';
 
-export interface JobSequenceMetadataInterface {
+export interface ProcessorMetadataInterface {
   name: string;
   options?: DefineOptions;
 }

@@ -1,5 +1,5 @@
-import { createParamDecorator } from '../../utils/create-param-decorator.util';
-import { AgendaParamtypeEnum } from '../../enums/agenda-paramtype.enum';
+import { createParamDecorator } from '../../utils';
+import { AgendaParamtypeEnum } from '../../enums';
 
 export const Context: () => ParameterDecorator = createParamDecorator(
   AgendaParamtypeEnum.CONTEXT,

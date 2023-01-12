@@ -1,5 +1,5 @@
 import { ParamsFactory } from '@nestjs/core/helpers/external-context-creator';
-import { AgendaParamtypeEnum } from '../enums/agenda-paramtype.enum';
+import { AgendaParamtypeEnum } from '../enums';
 import { ParamData } from '@nestjs/common';
 import { Job } from 'agenda';
 

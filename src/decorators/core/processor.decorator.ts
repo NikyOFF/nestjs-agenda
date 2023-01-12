@@ -1,6 +1,6 @@
 import { DefineOptions } from 'agenda/dist/agenda/define';
-import { JobSequenceMetadataInterface } from '../../interfaces/job-sequence-metadata.interface';
 import { PROCESSOR_METADATA } from '../../constants';
+import { ProcessorMetadataInterface } from '../../interfaces';
 
 export const Processor =
   (name: string, options?: DefineOptions): MethodDecorator =>
@@ -9,7 +9,7 @@ export const Processor =
     propertyKey: string | symbol,
     descriptor: TypedPropertyDescriptor<any>,
   ) => {
-    const metadata: JobSequenceMetadataInterface[] = [
+    const metadata: ProcessorMetadataInterface[] = [
       {
         name: name,
         options: options,

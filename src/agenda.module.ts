@@ -6,12 +6,13 @@ import {
   Provider,
 } from '@nestjs/common';
 import { DiscoveryModule, ModuleRef } from '@nestjs/core';
-import { ExplorerService } from './services/explorer.service';
-import { MetadataAccessorService } from './services/metadata-accessor.service';
+import { ExplorerService, MetadataAccessorService } from './services';
 import { Agenda, AgendaConfig } from 'agenda';
 import { AGENDA, AGENDA_MODULE_OPTIONS } from './constants';
-import { AgendaModuleAsyncOptionsInterface } from './interfaces/agenda-module-async-options.interface';
-import { AgendaModuleOptionsFactoryInterface } from './interfaces/agenda-module-options-factory.interface';
+import {
+  AgendaModuleAsyncOptionsInterface,
+  AgendaModuleOptionsFactoryInterface,
+} from './interfaces';
 
 @Global()
 @Module({
