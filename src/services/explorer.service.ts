@@ -2,15 +2,17 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { AgendaParamsFactory } from '../factories/agenda-params.factory';
 import Agenda from 'agenda';
 import { MetadataAccessorService } from '../services/metadata-accessor.service';
-import { ModuleRef, MetadataScanner, ModulesContainer } from '@nestjs/core';
+import {
+  ModuleRef,
+  MetadataScanner,
+  ModulesContainer,
+  DiscoveryService,
+} from '@nestjs/core';
 import { ExternalContextCreator } from '@nestjs/core/helpers/external-context-creator';
 import { AGENDA, PARAM_ARGS_METADATA } from '../constants';
-import { Module } from '@nestjs/core/injector/module';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 import { ParamMetadata } from '@nestjs/core/helpers/interfaces';
 import { AgendaContextType } from '../types/agenda-context.type';
-import { identity } from 'lodash';
-import { flattenDeep } from '../utils';
 
 @Injectable()
 export class ExplorerService implements OnModuleInit {
@@ -18,6 +20,7 @@ export class ExplorerService implements OnModuleInit {
   private agenda: Agenda;
 
   public constructor(
+    private readonly discoveryService: DiscoveryService,
     private readonly metadataAccessor: MetadataAccessorService,
     private readonly moduleRef: ModuleRef,
     private readonly metadataScanner: MetadataScanner,
@@ -32,36 +35,37 @@ export class ExplorerService implements OnModuleInit {
   }
 
   private explore(): void {
-    const modules = [...this.modulesContainer.values()];
+    const providers = this.discoveryService.getProviders();
 
-    this.registerJobProcessors(modules);
+    this.registerJobProcessors(providers);
   }
 
-  private registerJobProcessors(modules: Module[]): void {
-    const jobProcessorsWrappers = this.flatMap<InstanceWrapper>(
-      modules,
-      (wrapper) => this.filterJobProcessors(wrapper),
-    );
+  private registerJobProcessors(providers: InstanceWrapper[]): void {
+    const filteredProviders = providers.filter(this.filterJobProcessors);
 
-    jobProcessorsWrappers.forEach((wrapper) => {
-      const instancePrototype = Object.getPrototypeOf(wrapper.instance);
+    for (const provider of filteredProviders) {
+      const instancePrototype = Object.getPrototypeOf(provider.instance);
 
       this.metadataScanner.scanFromPrototype(
-        wrapper.instance,
+        provider.instance,
         instancePrototype,
-        (name) => {
-          this.registerProcessor(wrapper.instance, instancePrototype, name);
+        (methodKey) => {
+          this.registerProcessor(
+            provider.instance,
+            instancePrototype,
+            methodKey,
+          );
         },
       );
-    });
+    }
   }
 
   private registerProcessor(
     instance: any,
     prototype: any,
-    methodName: string,
+    methodKey: string,
   ): void {
-    const methodRef = prototype[methodName];
+    const methodRef = prototype[methodKey];
     const processorsMetadata =
       this.metadataAccessor.getProcessorMetadata(methodRef);
 
@@ -73,7 +77,7 @@ export class ExplorerService implements OnModuleInit {
       const processorFunction = this.createContextProcessor(
         instance,
         prototype,
-        methodName,
+        methodKey,
       );
 
       this.agenda.define(
@@ -123,33 +127,5 @@ export class ExplorerService implements OnModuleInit {
     }
 
     return wrapper;
-  }
-
-  private flatMap<T>(
-    modules: Module[],
-    callback: (instance: InstanceWrapper, moduleRef: Module) => T | T[],
-  ): T[] {
-    const visitedModules = new Set<Module>();
-
-    const unwrap = (moduleRef: Module) => {
-      if (visitedModules.has(moduleRef)) {
-        return [];
-      } else {
-        visitedModules.add(moduleRef);
-      }
-
-      const providers = [...moduleRef.providers.values()];
-      const defined = providers.map((wrapper) => callback(wrapper, moduleRef));
-
-      const imported: (T | T[])[] = moduleRef.imports?.size
-        ? [...moduleRef.imports.values()].reduce((prev, cur) => {
-            return [...prev, ...unwrap(cur)];
-          }, [])
-        : [];
-
-      return [...defined, ...imported];
-    };
-
-    return flattenDeep(modules.map(unwrap)).filter(identity);
   }
 }
