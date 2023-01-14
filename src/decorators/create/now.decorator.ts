@@ -11,11 +11,14 @@ export const Now =
     Reflect.defineMetadata(
       PROCESSOR_SCHEDULE_METADATA,
       [
-        ...Reflect.getMetadata(PROCESSOR_SCHEDULE_METADATA, descriptor.value) || [],
+        ...(Reflect.getMetadata(
+          PROCESSOR_SCHEDULE_METADATA,
+          descriptor.value,
+        ) || []),
         {
           type: 'now',
           data: data,
-        }
+        },
       ],
       descriptor.value,
     );

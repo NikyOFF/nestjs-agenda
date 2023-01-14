@@ -2,11 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { AgendaParamsFactory } from '../factories';
 import Agenda from 'agenda';
 import { MetadataAccessorService } from './metadata-accessor.service';
-import {
-  ModuleRef,
-  MetadataScanner,
-  DiscoveryService,
-} from '@nestjs/core';
+import { ModuleRef, MetadataScanner, DiscoveryService } from '@nestjs/core';
 import { ExternalContextCreator } from '@nestjs/core/helpers/external-context-creator';
 import { AGENDA, AGENDA_PARAM_ARGS_METADATA } from '../constants';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
@@ -67,7 +63,8 @@ export class ExplorerService implements OnModuleInit {
     methodKey: string,
   ): void {
     const methodRef = prototype[methodKey];
-    const processorMetadata = this.metadataAccessor.getProcessorMetadata(methodRef);
+    const processorMetadata =
+      this.metadataAccessor.getProcessorMetadata(methodRef);
 
     if (!processorMetadata) {
       return;
@@ -99,7 +96,8 @@ export class ExplorerService implements OnModuleInit {
   }
 
   private scheduleProcessor(methodRef: any, name: string): Promise<void> {
-    const scheduleMetadta = this.metadataAccessor.getProcessorScheduleMetadata(methodRef);
+    const scheduleMetadta =
+      this.metadataAccessor.getProcessorScheduleMetadata(methodRef);
 
     if (!scheduleMetadta || !scheduleMetadta.length) {
       return;
@@ -111,7 +109,12 @@ export class ExplorerService implements OnModuleInit {
           this.agenda.now(name, metadata.data);
           break;
         case 'every':
-          this.agenda.every(metadata.interval, name, metadata.data, metadata.options);
+          this.agenda.every(
+            metadata.interval,
+            name,
+            metadata.data,
+            metadata.options,
+          );
           break;
         case 'schedule':
           this.agenda.schedule(metadata.when, name, metadata.data);

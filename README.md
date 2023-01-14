@@ -70,9 +70,9 @@ And then you can define `processor` with special decorator
 
 ```ts
 //example.processors-definer.ts
-import { JobProcessors, Processor } from 'nestjs-agenda-module';
+import { ProcessorsDefiner, Processor } from 'nestjs-agenda-module';
 
-@Processor()
+@ProcessorsDefiner()
 export class ExampleProcessorsDefiner {
     @Processor("EXAMPLE_JOB")
     public async exampleJob() {}
@@ -84,7 +84,7 @@ Also you can get access to current `job` data or `done` function with `job conte
 //example.processors-definer.ts
 import { Job } from 'agenda';
 import {
-    JobProcessor,
+    ProcessorsDefiner,
     Processor,
     Context,
     JobContext
@@ -94,7 +94,7 @@ interface ExampleJobData {
     message: string;
 }
 
-@JobProcessors()
+@ProcessorsDefiner()
 export class ExampleProcessorsDefiner {
     @Processor('EXAMPLE_JOB')
     public async exampleJob(
@@ -160,7 +160,7 @@ You have `every` `schedule` and `now` decorators who provided default agenda beh
 ```ts
 //example.processors-definer.ts
 import {
-    JobProcessor,
+    ProcessorsDefiner,
     Processor,
     Context,
     JobContext,
@@ -169,7 +169,7 @@ import {
     Every,
 } from 'nestjs-agenda-module';
 
-@JobProcessors()
+@ProcessorsDefiner()
 export class ExampleProcessorsDefiner {
     @Processor('EXAMPLE_JOB_1')
     @Every('15 minutes', { skipImmediate: true }, { message: 'test' })

@@ -11,7 +11,10 @@ export const Schedule =
     Reflect.defineMetadata(
       PROCESSOR_SCHEDULE_METADATA,
       [
-        ...Reflect.getMetadata(PROCESSOR_SCHEDULE_METADATA, descriptor.value) || [],
+        ...(Reflect.getMetadata(
+          PROCESSOR_SCHEDULE_METADATA,
+          descriptor.value,
+        ) || []),
         {
           type: 'schedule',
           when: when,

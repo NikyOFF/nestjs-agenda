@@ -8,7 +8,11 @@ export const createParamDecorator =
   (data?: ParamData): ParameterDecorator =>
   (target, key, index) => {
     const args =
-      Reflect.getMetadata(AGENDA_PARAM_ARGS_METADATA, target.constructor, key) || {};
+      Reflect.getMetadata(
+        AGENDA_PARAM_ARGS_METADATA,
+        target.constructor,
+        key,
+      ) || {};
 
     Reflect.defineMetadata(
       AGENDA_PARAM_ARGS_METADATA,
