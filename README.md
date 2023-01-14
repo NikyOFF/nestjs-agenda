@@ -36,6 +36,7 @@ $ npm i --save nestjs-agenda-module agenda
 Once the installation process is complete, we can import the AgendaModule into the root AppModule.
 
 ```ts
+//app.module.ts
 import { Module } from '@nestjs/common';
 import { AgendaModule } from 'nestjs-agenda-module';
 
@@ -49,28 +50,30 @@ import { AgendaModule } from 'nestjs-agenda-module';
 export class AppModule {}
 ```
 
-## Defining Job Processors
+## Defining processors
 
 Before you can use a job, you must define its processing behavior.
 
-For do this you need create `job-processors`
+For do this you need create `processors-definer`
 
 ```ts
-import { JobProcessors } from 'nestjs-agenda-module';
+//example.processors-definer.ts
+import { ProcessorsDefiner } from 'nestjs-agenda-module';
 
-@JobProcessors()
-export class ExampleJobProcessors {}
+@ProcessorsDefiner()
+export class ExampleProcessorsDefiner {}
 ```
 
-And then you can define `job-processor` with special decorator
+And then you can define `processor` with special decorator
 
-**@JobProcessor(jobName, [options])**
+**@Processor(jobName, [options])**
 
 ```ts
+//example.processors-definer.ts
 import { JobProcessors, Processor } from 'nestjs-agenda-module';
 
-@JobProcessors()
-export class ExampleJobProcessors {
+@Processor()
+export class ExampleProcessorsDefiner {
     @Processor("EXAMPLE_JOB")
     public async exampleJob() {}
 }
@@ -78,6 +81,7 @@ export class ExampleJobProcessors {
 Also you can get access to current `job` data or `done` function with `job context`
 
 ```ts
+//example.processors-definer.ts
 import { Job } from 'agenda';
 import {
     JobProcessor,
@@ -91,12 +95,12 @@ interface ExampleJobData {
 }
 
 @JobProcessors()
-export class ExampleJobProcessors {
+export class ExampleProcessorsDefiner {
     @Processor('EXAMPLE_JOB')
     public async exampleJob(
         @Context() context: JobContext<ExampleJobData>,
     ) {
-        const job: Job = context.job;
+        const job: Job<ExampleJobData> = context.job;
         const done: Function = context.done;
 
         console.log(job.attrs.data.message);
@@ -106,12 +110,13 @@ export class ExampleJobProcessors {
 }
 ```
 
-## Provide job processors
+## Provide processors definer
 
 ```ts
+//app.module.ts
 import { Module } from '@nestjs/common';
 import { AgendaModule } from 'nestjs-agenda-module';
-import { ExampleJobProcessors } from './example.job-processors.ts';
+import { ExampleProcessorsDefiner } from './example..processors-definer.ts';
 
 @Module({
   imports: [
@@ -119,14 +124,15 @@ import { ExampleJobProcessors } from './example.job-processors.ts';
         db: { address: 'MONGO_CONNECTION_URI' },
     }),
   ],
-  providers: [ExampleJobProcessors],
+  providers: [ExampleProcessorsDefiner],
 })
 export class AppModule {}
 ```
 
 ## Create job
-
+### default way
 ```ts
+//example.service.ts
 import { Inject, Injectable } from '@nestjs/common';
 import { Agenda } from 'agenda';
 import { InjectAgenda } from 'nestjs-agenda-module';
@@ -139,11 +145,48 @@ export class ExampleService {
     ) {}
 
     public async createJob(): Promise<void> {
-        this.agenda.every('15 minutes', 'EXAMPLE_JOB', { message: 'text' });
+        this.agenda.every('15 minutes', 'EXAMPLE_JOB', { message: 'text' }, { skipImmediate: true });
         this.agenda.schedule('1 day', 'EXAMPLE_JOB', { message: 'text' });
         this.agenda.now('EXAMPLE_JOB', { message: 'text' });
 
         //etc
+    }
+}
+```
+
+### special create decorators
+You have `every` `schedule` and `now` decorators who provided default agenda behavior for create job. You can provide default data or job options like in default agenda. Just read [documentation](https://www.npmjs.com/package/agenda#creating-jobs)
+
+```ts
+//example.processors-definer.ts
+import {
+    JobProcessor,
+    Processor,
+    Context,
+    JobContext,
+    Now,
+    Schedule,
+    Every,
+} from 'nestjs-agenda-module';
+
+@JobProcessors()
+export class ExampleProcessorsDefiner {
+    @Processor('EXAMPLE_JOB_1')
+    @Every('15 minutes', { skipImmediate: true }, { message: 'test' })
+    public async exampleJob1(@Context() context: JobContext) {
+        done();
+    }
+
+    @Processor('EXAMPLE_JOB_2')
+    @Schedule('tomorrow at noon', { message: 'test' })
+    public async exampleJob2(@Context() context: JobContext) {
+        done();
+    }
+
+    @Processor('EXAMPLE_JOB_3')
+    @Now({ message: 'test' })
+    public async exampleJob3(@Context() context: JobContext) {
+        done();
     }
 }
 ```

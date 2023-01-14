@@ -9,19 +9,12 @@ export const Processor =
     propertyKey: string | symbol,
     descriptor: TypedPropertyDescriptor<any>,
   ) => {
-    const metadata: ProcessorMetadataInterface[] = [
-      {
-        name: name,
-        options: options,
-      },
-    ];
+    const metadata: ProcessorMetadataInterface = {
+      name: name,
+      options: options,
+    };
 
-    const previousValue =
-      Reflect.getMetadata(PROCESSOR_METADATA, descriptor.value) || [];
-
-    const value = [...previousValue, ...metadata];
-
-    Reflect.defineMetadata(PROCESSOR_METADATA, value, descriptor.value);
+    Reflect.defineMetadata(PROCESSOR_METADATA, metadata, descriptor.value);
 
     return descriptor;
   };

@@ -5,11 +5,10 @@ import { MetadataAccessorService } from './metadata-accessor.service';
 import {
   ModuleRef,
   MetadataScanner,
-  ModulesContainer,
   DiscoveryService,
 } from '@nestjs/core';
 import { ExternalContextCreator } from '@nestjs/core/helpers/external-context-creator';
-import { AGENDA, PARAM_ARGS_METADATA } from '../constants';
+import { AGENDA, AGENDA_PARAM_ARGS_METADATA } from '../constants';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 import { ParamMetadata } from '@nestjs/core/helpers/interfaces';
 import { AgendaContextType } from '../types';
@@ -25,7 +24,6 @@ export class ExplorerService implements OnModuleInit {
     private readonly metadataAccessor: MetadataAccessorService,
     private readonly moduleRef: ModuleRef,
     private readonly metadataScanner: MetadataScanner,
-    private readonly modulesContainer: ModulesContainer,
     private readonly externalContextCreator: ExternalContextCreator,
   ) {}
 
@@ -38,13 +36,15 @@ export class ExplorerService implements OnModuleInit {
   private explore(): void {
     const providers = this.discoveryService.getProviders();
 
-    this.registerJobProcessors(providers);
+    this.registerProcessorsDefiners(providers);
   }
 
-  private registerJobProcessors(providers: InstanceWrapper[]): void {
-    const filteredProviders = providers.filter(this.filterJobProcessors);
+  private registerProcessorsDefiners(providers: InstanceWrapper[]): void {
+    for (const provider of providers) {
+      if (!this.metadataAccessor.isProcessorsDefiner(provider.metatype)) {
+        continue;
+      }
 
-    for (const provider of filteredProviders) {
       const instancePrototype = Object.getPrototypeOf(provider.instance);
 
       this.metadataScanner.scanFromPrototype(
@@ -67,16 +67,14 @@ export class ExplorerService implements OnModuleInit {
     methodKey: string,
   ): void {
     const methodRef = prototype[methodKey];
-    const processorsMetadata =
-      this.metadataAccessor.getProcessorMetadata(methodRef);
+    const processorMetadata = this.metadataAccessor.getProcessorMetadata(methodRef);
 
-    if (!processorsMetadata) {
+    if (!processorMetadata) {
       return;
     }
 
-    for (const processorMetadata of processorsMetadata) {
-      this.defineProcessor(instance, prototype, methodKey, processorMetadata);
-    }
+    this.defineProcessor(instance, prototype, methodKey, processorMetadata);
+    this.scheduleProcessor(methodRef, processorMetadata.name);
   }
 
   private defineProcessor(
@@ -100,6 +98,28 @@ export class ExplorerService implements OnModuleInit {
     );
   }
 
+  private scheduleProcessor(methodRef: any, name: string): Promise<void> {
+    const scheduleMetadta = this.metadataAccessor.getProcessorScheduleMetadata(methodRef);
+
+    if (!scheduleMetadta || !scheduleMetadta.length) {
+      return;
+    }
+
+    for (const metadata of scheduleMetadta) {
+      switch (metadata.type) {
+        case 'now':
+          this.agenda.now(name, metadata.data);
+          break;
+        case 'every':
+          this.agenda.every(metadata.interval, name, metadata.data, metadata.options);
+          break;
+        case 'schedule':
+          this.agenda.schedule(metadata.when, name, metadata.data);
+          break;
+      }
+    }
+  }
+
   private createContextProcessor<T extends Record<string, unknown>>(
     instance: T,
     prototype: unknown,
@@ -112,21 +132,12 @@ export class ExplorerService implements OnModuleInit {
       instance,
       prototype[methodName],
       methodName,
-      PARAM_ARGS_METADATA,
+      AGENDA_PARAM_ARGS_METADATA,
       this.agendaParamsFactory,
       undefined,
       undefined,
       undefined,
       'agenda',
     );
-  }
-
-  private filterJobProcessors(
-    wrapper: InstanceWrapper,
-  ): InstanceWrapper<unknown> {
-    return !wrapper.instance ||
-      !this.metadataAccessor.isJobProcessors(wrapper.metatype)
-      ? undefined
-      : wrapper;
   }
 }
