@@ -116,7 +116,7 @@ export class ExampleProcessorsDefiner {
 //app.module.ts
 import { Module } from '@nestjs/common';
 import { AgendaModule } from 'nestjs-agenda-module';
-import { ExampleProcessorsDefiner } from './example..processors-definer.ts';
+import { ExampleProcessorsDefiner } from './example.processors-definer.ts';
 
 @Module({
   imports: [
