@@ -1,1 +1,1 @@
-export * from "./create-param-decorator.util";
+export * from './create-param-decorator.util';
